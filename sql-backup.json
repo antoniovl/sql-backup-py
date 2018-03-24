@@ -1,0 +1,46 @@
+{
+  "day_of_week" : "sunday",
+  "day_of_month" : 1,
+  "data_dir" : "baks",
+  "log_file" : "sql-back.log",
+  "log_mode" : "append",
+  "log_level" : "DEBUG",
+  "timestamps" : true,
+  "mysql_dump_exe" : "/opt/local/bin/mysqldump",
+  "compression_type": "bz2",
+  "bzip2_exe" : "/usr/bin/bzip2",
+  "p7zip_exe" : "7z-ultra.sh",
+  "pg_dump_exe" : "/opt/local/bin/pg_dump",
+  "db_servers": {
+    "server1-postgresql": {
+      "type": "postgresql",
+      "hostname": "server1.com",
+      "port": 5432,
+      "user": "postgres",
+      "password": "my_pa$$",
+      "databases": [
+        {
+          "db_name" : "mydb1",
+          "frequency": "daily",
+          "compress": true,
+          "verify": true
+        }
+      ]
+    },
+    "server2-mysql" : {
+      "type": "mysql",
+      "hostname" : "server2.com",
+      "port" : 3306,
+      "user" : "bak_user",
+      "password" : "otherPa$$",
+      "databases" : [
+        {
+          "db_name" : "mydb2",
+          "frequency" : "daily",
+          "compress" : true,
+          "verify" : true
+        }
+      ]
+    }
+  }
+}

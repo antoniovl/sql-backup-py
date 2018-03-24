@@ -1,0 +1,14 @@
+{
+  "day_of_week" : "sunday",
+  "day_of_month" : 1,
+  "data_dir" : "/tmp",
+  "log_file" : "sql-back.log",
+  "log_mode" : "append",
+  "log_level" : "DEBUG",
+  "timestamps" : true,
+  "mysql_dump_exe" : "/opt/local/bin/mysqldump",
+  "bzip2_exe" : "/usr/bin/bzip2",
+  "p7zip_exe" : "7z-ultra.sh",
+  "pg_dump_exe" : "/Applications/pgAdmin 4.app/Contents/SharedSupport/pg_dump",
+  "db_servers": {}
+}
