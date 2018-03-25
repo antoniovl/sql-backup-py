@@ -369,7 +369,8 @@ class SQLBackup(object):
             compress = database[DB_COMPRESS]
             file_name = self.get_file_name(db_type, db_name)
 
-            logger.info("Processing database '{}', type '{}'.".format(database, db_type))
+            logger.info("Processing database '{}', type '{}', frequency {}."
+                        .format(database[DB_NAME], db_type, frequency))
 
             try:
                 if db_type == DBType.MYSQL.value:
@@ -395,6 +396,16 @@ class SQLBackup(object):
             self._do_backup(db_server, data)
 
 
+def _exit(message, code=0, error=None, print_trace=False):
+    print(message)
+    if print_trace:
+        format_exc = traceback.format_exc()
+        print(format_exc)
+    if error:
+        print(error)
+    exit(code)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='SQL Backup Generator')
@@ -404,14 +415,20 @@ if __name__ == '__main__':
     parser.add_argument('--logmode', action='store', choices=['append', 'overwrite'], help='Append or overwrite log file')
     args = parser.parse_args()
 
+    kwargs = dict()
+    kwargs['format'] = '%(asctime)s:%(levelname)s: %(message)s'
+    kwargs['datefmt'] = '%Y-%m-%d %H:%M:%S'
     if args.logfile:
+        kwargs['filename'] = args.logfile
         if args.logmode and args.logmode == 'overwrite':
-            logging.basicConfig(filename=args.logfile, filemode='w')
-        logging.basicConfig(filename=args.logfile)
-    else:
-        logging.basicConfig()
+            kwargs['filemode'] = 'w'
+    logging.basicConfig(**kwargs)
+
     if args.loglevel:
-        logger.setLevel(args.loglevel)
+        try:
+            logger.setLevel(args.loglevel)
+        except ValueError as ve:
+            _exit('\nCritical error processing loglevel argument:\n', code=1, error=ve)
     else:
         logger.setLevel(logging.INFO)
 
@@ -422,10 +439,9 @@ if __name__ == '__main__':
 
     # Process
     try:
+        logger.info('****************************')
+        logger.info('Starting sql-backup process.')
         sql_backup.process()
     except Exception as e:
-        exc_info = sys.exc_info()
-        formatted = traceback.format_exc()
-        logger.error(formatted)
-        logger.error(e)
-        exit(code=1)
+        _exit('Error found - can\'t continue. ', code=1, error=e, print_trace=True)
+
