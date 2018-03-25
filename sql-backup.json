@@ -10,6 +10,7 @@
   "compression_type": "bz2",
   "bzip2_exe" : "/usr/bin/bzip2",
   "p7zip_exe" : "7z-ultra.sh",
+  "gzip_exe": "/usr/bin/gzip",
   "pg_dump_exe" : "/opt/local/bin/pg_dump",
   "db_servers": {
     "server1-postgresql": {

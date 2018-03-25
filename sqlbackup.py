@@ -24,6 +24,7 @@ CFG_MYSQL_DUMP_EXE = 'mysql_dump_exe'
 CFG_COMPRESSION_TYPE = 'compression_type'
 CFG_BZIP2_EXE = 'bzip2_exe'
 CFG_P7ZIP_EXE = 'p7zip_exe'
+CFG_GZIP_EXE = 'gzip_exe'
 CFG_PG_DUMP_EXE = 'pg_dump_exe'
 CFG_DB_SERVERS = 'db_servers'
 CFG_DATABASES = 'databases'
@@ -227,16 +228,45 @@ class SQLBackup(object):
             raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
 
     def compress_gz(self, file_name):
-        raise SQLBackupError('gz compression not implemented')
+        cfg = self._config
+        gzip_exe = cfg[CFG_GZIP_EXE]
+        cmd = [gzip_exe, '-9', file_name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info('Compressing {}'.format(file_name))
+        (stdout, stderr) = p.communicate()
+        if stderr and len(stderr) > 0:
+            raise SQLBackupError('Error compressing {}: {}'.format(file_name, stderr))
 
     def verify_gz(self, file_name):
-        raise SQLBackupError('gz file verification not implemented')
+        cfg = self._config
+        gzip_exe = cfg[CFG_GZIP_EXE]
+        cmd = [gzip_exe, '-t', file_name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info('Verifying {}'.format(file_name))
+        (stdout, stderr) = p.communicate()
+        if stderr and len(stderr) > 0:
+            raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
 
     def compress_7z(self, file_name):
-        raise SQLBackupError('7z compression not implemented')
+        cfg = self._config
+        p7z_exe = cfg[CFG_P7ZIP_EXE]
+        p7z_file = '{}.7z'.format(file_name)
+        cmd = [p7z_exe, 'a', '-bd', '-t7z', '-m0=lzma', '-mx=9', '-mfb=64', '-md=64m', '-ms=on', '-sdel', p7z_file, file_name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info('Compressing {}'.format(file_name))
+        (stdout, stderr) = p.communicate()
+        if stderr and len(stderr) > 0:
+            raise SQLBackupError('Error compressing {}: {}'.format(file_name, stderr))
 
     def verify_7z(self, file_name):
-        raise SQLBackupError('7z file verification not implemented')
+        cfg = self._config
+        p7z_exe = cfg[CFG_P7ZIP_EXE]
+        cmd = [p7z_exe, 't', file_name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info('Verifying {}'.format(file_name))
+        (stdout, stderr) = p.communicate()
+        if stderr and len(stderr) > 0:
+            raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
 
     def compress(self, file_name):
         cfg = self._config
@@ -258,14 +288,13 @@ class SQLBackup(object):
         Verifies the compressed file.
         """
         cfg = self._config
-        bzip_exe = cfg[CFG_BZIP2_EXE]
-        cmd = [bzip_exe, '-t', file_name]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info('Verifying {}'.format(file_name))
-        (stdout, stderr) = p.communicate()
-        if stderr and len(stderr) > 0:
-            raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
-        logger.info('Compressed file {} verified.'.format(file_name))
+        compression_type = cfg[CFG_COMPRESSION_TYPE]
+        if compression_type == CompressionTypeEnum.BZ2.value:
+            self.verify_bz2(file_name)
+        elif compression_type == CompressionTypeEnum.GZ.value:
+            self.verify_gz(file_name)
+        else:
+            self.verify_7z(file_name)
 
     def mysql_backup(self, user, passwd, db, file_name, host='localhost', port=3306):
         cfg = self._config
@@ -376,6 +405,7 @@ if __name__ == '__main__':
 
     # Load config file
     sql_backup.load_config(args.config_file)
+
     # Process
     try:
         sql_backup.process()
