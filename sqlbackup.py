@@ -171,8 +171,6 @@ class SQLBackup(object):
             if not type(value) == int:
                 raise ValueError('Expected int value in day of month')
 
-        logger.debug('json_config: {}'.format(json_cfg))
-
         self._config = json_cfg
         return self._config
 
@@ -347,6 +345,9 @@ class SQLBackup(object):
         port = data[SERVER_PORT]
         databases = data[SERVER_DATABASES]
         db_type = data[SERVER_TYPE]
+
+        logger.info('Processing server \'{}\''.format(db_server))
+
         for database in databases:
 
             frequency = database[DB_FREQUENCY]
@@ -367,6 +368,8 @@ class SQLBackup(object):
             verify = database[DB_VERIFY]
             compress = database[DB_COMPRESS]
             file_name = self.get_file_name(db_type, db_name)
+
+            logger.info("Processing database '{}', type '{}'.".format(database, db_type))
 
             try:
                 if db_type == DBType.MYSQL.value:
@@ -396,10 +399,21 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='SQL Backup Generator')
     parser.add_argument('config_file', action='store', help='Name of the config file')
+    parser.add_argument('--logfile', action='store', help='Direct log messages to file (defaults to stdout)')
+    parser.add_argument('--loglevel', action='store', help='Log message verbosity.')
+    parser.add_argument('--logmode', action='store', choices=['append', 'overwrite'], help='Append or overwrite log file')
     args = parser.parse_args()
 
-    logging.basicConfig()
-    logger.setLevel(logging.DEBUG)
+    if args.logfile:
+        if args.logmode and args.logmode == 'overwrite':
+            logging.basicConfig(filename=args.logfile, filemode='w')
+        logging.basicConfig(filename=args.logfile)
+    else:
+        logging.basicConfig()
+    if args.loglevel:
+        logger.setLevel(args.loglevel)
+    else:
+        logger.setLevel(logging.INFO)
 
     sql_backup = SQLBackup()
 
