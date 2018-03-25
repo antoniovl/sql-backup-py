@@ -6,9 +6,10 @@ import argparse
 import copy
 import subprocess
 import os
-import sys
 import traceback
-import datetime, time
+import datetime
+import time
+import calendar
 
 from enum import Enum
 
@@ -337,6 +338,11 @@ class SQLBackup(object):
     def _get_today():
         return datetime.datetime.now().day
 
+    @staticmethod
+    def _get_day_of_week():
+        wd = datetime.datetime.now().weekday()
+        return calendar.day_name[wd].lower()
+
     def _do_backup(self, db_server, data):
         cfg = self._config
         user = data[SERVER_USER]
@@ -354,9 +360,19 @@ class SQLBackup(object):
             db_name = database[DB_NAME]
 
             if frequency == Frequency.MONTHLY.value:
-                pass
+                day_of_month = cfg[CFG_DAY_OF_MONTH]
+                today = self._get_today()
+                if today != day_of_month:
+                    logger.info("Skipping {} as it's scheduled for monthly backup at every {} and today is {}"
+                                .format(db_name, today, day_of_month))
+                    continue
             elif frequency == Frequency.WEEKLY.value:
-                pass
+                weekday = self._get_day_of_week()
+                day_of_week = cfg[CFG_DAY_OF_WEEK]
+                if weekday != day_of_week:
+                    logger.info("Skipping {} as it's scheduled for weekly backup at every {} and today is {}"
+                                .format(db_name, day_of_week, weekday))
+                    continue
             elif frequency == Frequency.DAILY.value:
                 pass
             else:
