@@ -13,7 +13,7 @@ The JSON config file argument is mandatory, the others are optional. The optiona
   * `append`: Appends messages to the end of the logfile. This is the default.
   * `overwrite`: Reset the logfile erasing old messages.
 
-The usage is to run the script from a cront task once a day. Depending on the config, it will generate daily, weekly or monthly backups:
+The main idea is to run the script from a cront task once a day, but you can run it manually if you like. Depending on the config, it will generate daily, weekly or monthly backups:
 
 * Daily indicates to generate a backup for that database. This is the default behavior.
 * Weekly backups ocur once a week. If you say `'monday'` for `day_of_week` and if today is Monday then the backup for that database will be processed.
@@ -95,3 +95,6 @@ Sample config file:
   }
 }
 ```
+
+&copy; CopyRight Antonio Varela<br/>
+Released under the MIT License
