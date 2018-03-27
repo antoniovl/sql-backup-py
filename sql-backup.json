@@ -11,7 +11,7 @@
   "pg_dump_exe" : "/opt/local/bin/pg_dump",
   "db_servers": {
     "server1-postgresql": {
-      "type": "postgresql",
+      "db_type": "postgresql",
       "hostname": "server1.com",
       "port": 5432,
       "user": "postgres",
@@ -26,7 +26,7 @@
       ]
     },
     "server2-mysql" : {
-      "type": "mysql",
+      "db_type": "mysql",
       "hostname" : "server2.com",
       "port" : 3306,
       "user" : "bak_user",

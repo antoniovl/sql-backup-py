@@ -12,7 +12,7 @@ import time
 import calendar
 
 from enum import Enum
-from common import SQLBackupConfig
+from common import SQLBackupConfig, SQLBackupError, DBType, CompressionTypeEnum, Frequency
 
 
 ENV_MYSQL_PWD = 'MYSQL_PWD'
@@ -22,65 +22,13 @@ ENV_PGPASSWORD = 'PGPASSWORD'
 logger = logging.getLogger(__name__)
 
 
-class DBType(Enum):
-    """Database type enumeration."""
-    MYSQL = 'mysql'
-    POSTGRESQL = 'postgresql'
-
-
-class Frequency(Enum):
-    """Frequencies enumeration."""
-    MONTHLY = 'monthly'
-    WEEKLY = 'weekly'
-    DAILY = 'daily'
-
-
-class LogWriteMode(Enum):
-    APPEND = 'append'
-    CREATE = 'create'
-
-
-class CompressionTypeEnum(Enum):
-    BZ2 = 'bz2'
-    GZ = 'gz'
-    P7Z = '7z'
-
-
-class SQLBackupError(Exception):
-    pass
-
-
-
 class SQLBackup(object):
 
     def __init__(self, config_file):
-        self.config = SQLBackupConfig(config_file)
-
-    # def load_config(self, config_file_name):
-    #     """
-    #     Loads the config from the json file.
-    #     :param config_file_name:
-    #     :return: Instance of dict with all the settings.
-    #     """
-    #     with open(config_file_name) as config_file:
-    #         json_cfg = json.load(config_file)
-    #
-    #     # jsonschema.validate(json_cfg, _config_schema, format_checker=jsonschema.FormatChecker())
-    #
-    #     # Read values
-    #     if json_cfg[CFG_DAY_OF_WEEK]:
-    #         value = json_cfg[CFG_DAY_OF_WEEK]
-    #         if value not in DAYS_OF_WEEK:
-    #             raise ValueError("{} is not a valid day of week".format(value))
-    #         DEFAULT_CONFIG[CFG_DAY_OF_WEEK] = value
-    #     # Day of month
-    #     if json_cfg[CFG_DAY_OF_MONTH]:
-    #         value = json_cfg[CFG_DAY_OF_MONTH]
-    #         if not type(value) == int:
-    #             raise ValueError('Expected int value in day of month')
-    #
-    #     self._config = json_cfg
-    #     return self._config
+        with open(config_file) as file:
+            json_cfg = json.load(file)
+        self.config = SQLBackupConfig(json_cfg)
+        self.config.validate()
 
     @staticmethod
     def _get_timestamp(clock):
@@ -112,7 +60,7 @@ class SQLBackup(object):
         inplace without reading or writing to memory.
         """
         cfg = self.config
-        cmd = [cfg.bzip_exe, '-9', file_name]
+        cmd = [cfg.bzip2_exe, '-9', file_name]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info('Compressing {}'.format(file_name))
         (stdout, stderr) = p.communicate()
@@ -124,7 +72,7 @@ class SQLBackup(object):
         Verifies the bzip2 compressed file.
         """
         cfg = self.config
-        cmd = [cfg.bzip_exe, '-t', file_name]
+        cmd = [cfg.bzip2_exe, '-t', file_name]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info('Verifying {}'.format(file_name))
         (stdout, stderr) = p.communicate()
@@ -253,8 +201,8 @@ class SQLBackup(object):
         """
         cfg = self.config
         user = server_data.user
-        passwd = server_data.passwd
-        host = server_data.host
+        passwd = server_data.password
+        host = server_data.hostname
         port = server_data.port
         databases = server_data.databases
         db_type = server_data.db_type
@@ -352,13 +300,12 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    sql_backup = SQLBackup(args.config_file)
-
     # Process
     try:
+        sql_backup = SQLBackup(args.config_file)
         logger.info('****************************')
         logger.info('Starting sql-backup process.')
         sql_backup.process()
     except Exception as e:
-        _exit('Error found - can\'t continue. ', code=1, error=e, print_trace=True)
+        _exit('Critical Error found - Can\'t Continue. ', code=1, error=e, print_trace=False)
 
