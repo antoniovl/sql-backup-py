@@ -3,7 +3,6 @@
 import logging
 import json
 import argparse
-import copy
 import subprocess
 import os
 import traceback
@@ -11,7 +10,8 @@ import datetime
 import time
 import calendar
 
-from enum import Enum
+from schematics.exceptions import DataError
+from json import JSONDecodeError
 from common import SQLBackupConfig, SQLBackupError, DBType, CompressionTypeEnum, Frequency
 
 
@@ -80,6 +80,11 @@ class SQLBackup(object):
             raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
 
     def compress_gz(self, file_name):
+        """
+        See compress_bz2.
+        :param file_name:
+        :return:
+        """
         cfg = self.config
         cmd = [cfg.gzip_exe, '-9', file_name]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -117,6 +122,11 @@ class SQLBackup(object):
             raise SQLBackupError('Integrity error in {}: {}'.format(file_name, stderr))
 
     def compress(self, file_name):
+        """
+        Common routine that invokes the correct compression method based on the config values.
+        :param file_name:
+        :return:
+        """
         cfg = self.config
         compression_type = cfg.compression_type
         if compression_type == CompressionTypeEnum.BZ2.value:
@@ -145,6 +155,16 @@ class SQLBackup(object):
             self.verify_7z(file_name)
 
     def mysql_backup(self, user, passwd, db, file_name, host='localhost', port=3306):
+        """
+        Generates a backup for MySQL.
+        :param user: Database server username.
+        :param passwd:
+        :param db: Database name.
+        :param file_name: Output file.
+        :param host: Database host.
+        :param port: Database port, defaults to 3306.
+        :return:
+        """
         cfg = self.config
         cmd = [
             cfg.mysql_dump_exe, '--opt', '--single-transaction',
@@ -164,6 +184,16 @@ class SQLBackup(object):
             raise SQLBackupError(stderr)
 
     def pgsql_backup(self, user, passwd, db, file_name, host='localhost', port=5432):
+        """
+        Generates a backup for PostgreSQL.
+        :param user: Database username.
+        :param passwd:
+        :param db: Database name.
+        :param file_name: Output file.
+        :param host: Database hostname.
+        :param port: Database port, defaults to 5432.
+        :return:
+        """
         cfg = self.config
         cmd = [
             cfg.pg_dump_exe,
@@ -306,6 +336,8 @@ if __name__ == '__main__':
         logger.info('****************************')
         logger.info('Starting sql-backup process.')
         sql_backup.process()
+    except (DataError, JSONDecodeError) as de:
+        _exit("Configuration Error Found - Can't Continue. ", code=1, error=de)
     except Exception as e:
-        _exit('Critical Error found - Can\'t Continue. ', code=1, error=e, print_trace=False)
+        _exit('Critical Error found - Can\'t Continue. ', code=1, error=e)
 
