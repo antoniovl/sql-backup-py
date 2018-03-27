@@ -28,8 +28,70 @@ You need to provide a JSON file describing all the servers and databases that ne
 
 * **`day_of_week:`** Specifies the day of week for weekly backups. It defaults to "sunday". 
 * **`day_of_month:`** Day of the month when the montly backups will be generated. Be careful if you specify `31` here, because the backup won't be generated for some Months (i.e. February, April, June, etc).
-* **`data_dir:`** Directory where the generated files will be stored. Defaults to `.` (curent dir).
+* **`data_dir:`** Directory where the generated files will be stored. Don't put a trailing '/' at the end. Defaults to `.` (curent dir).
 * **`timestamps:`** If true then a timestamp 'YYYYMMDD-HHSS' will be appended to the backup's file name. This is useful for file rotation.
 * **`mysql_dump_exe:`** Path to the `mysqldump` utility. Defaults to `/usr/bin/mysqldump`.
 * **`pg_dump_exe:`** Path to the `pg_dump` utility. Defaults to `/usr/bin/pg_dump`.
 * **`compression_type:`** Specifies the utility used to compress the backups. Valid values are `7z, bz2` and `gz`. I.e to compress with bzip2, put `bz2` in this value.
+* **`bzip2_exe:`** Path to the bzip2 utility. Defaults to `/usr/bin/bzip2`.
+* **`p7zip_exe:`** Path to the 7zip utility. Defaults to `/usr/bin/7z`.
+* **`gzip_exe:`** Path to the gzip utility. Defaults to `/usr/bin/gzip`.
+* **`db_servers:`** This is a map (dictionary) of database server objects. Each item is a "db_server_key: {object}" key value pair. The db_server object contains a list of databases. You can put as many items as you need. It has the following properties:
+  * **`db_type:`** Type of database server. Valid values are `mysql` and `postgresql`.
+  * **`hostname:`** Database Hostname or IP adress. Required, no default value.
+  * **`port:`** Database port. Required, no default value.
+  * **`user:`** Database username. This user need to have access to all the databases specified on the `databases` property. Required, no default value.
+  * **`password:`** Username password. Required, no default value.
+  * **`databases:`** List for databases to be backed up. Each item in the list has the following structure:
+    * **`db_name:`** Name of the database.
+    * **`frequency:`** Frequency for the backup generation (for this database). Valid values are `daily, weekly` and `monthly`. Defaults to daily.
+    * **`compress:`** If set to true, then the resulting file will be compressed using the compression utility specified in `compression_type`. Defaults to `7z`.
+    * **`verify:`** If set to true, verifies the resulting file using the compression utility. Defaults to `true`. It's used only if `compress` is set to true.
+    
+Sample config file:
+```javascript
+{
+  "day_of_week" : "sunday",
+  "day_of_month" : 1,
+  "data_dir" : "/opt/backups",
+  "timestamps" : true,
+  "mysql_dump_exe" : "/usr/local/bin/mysqldump",
+  "pg_dump_exe" : "/usr/local/bin/pg_dump",
+  "compression_type": "bz2",
+  "bzip2_exe" : "/usr/bin/bzip2",
+  "p7zip_exe" : "/opt/local/bin/7za",
+  "gzip_exe": "/usr/bin/gzip",
+  "db_servers": {
+    "server1-postgresql": {
+      "db_type": "postgresql",
+      "hostname": "localhost",
+      "port": 5432,
+      "user": "db_user1",
+      "password": "passwd1",
+      "databases": [
+        {
+          "db_name" : "sql_backup_db",
+          "frequency": "daily",
+          "compress": true,
+          "verify": true
+        }
+      ]
+    },
+    "server2-mysql" : {
+      "db_type": "mysql",
+      "hostname" : "localhost",
+      "port" : 3306,
+      "user" : "db_user2",
+      "password" : "passwd2",
+      "databases" : [
+        {
+          "db_name" : "my_database",
+          "frequency" : "monthly",
+          "compress" : false,
+          "verify" : false
+        }
+      ]
+    }
+  }
+}
+```
