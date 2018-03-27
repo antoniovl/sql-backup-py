@@ -35,9 +35,9 @@ class SQLBackupError(Exception):
 
 class Database(Model):
     db_name = StringType(required=True)
-    frequency = StringType(required=True, regex='daily|weekly|monthly', default='daily')
-    compress = BooleanType(required=True, default=True)
-    verify = BooleanType(required=True, default=True)
+    frequency = StringType(regex='daily|weekly|monthly', default='daily')
+    compress = BooleanType(default=True)
+    verify = BooleanType(default=True)
 
 
 class DBServer(Model):
