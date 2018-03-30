@@ -11,7 +11,6 @@ import time
 import calendar
 
 from schematics.exceptions import DataError
-from json import JSONDecodeError
 from common import SQLBackupConfig, SQLBackupError, DBType, CompressionTypeEnum, Frequency
 
 
@@ -336,7 +335,7 @@ if __name__ == '__main__':
         logger.info('****************************')
         logger.info('Starting sql-backup process.')
         sql_backup.process()
-    except (DataError, JSONDecodeError) as de:
+    except DataError as de:
         _exit("Configuration Error Found - Can't Continue. ", code=1, error=de)
     except Exception as e:
         _exit('Critical Error found - Can\'t Continue. ', code=1, error=e)
