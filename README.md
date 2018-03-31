@@ -35,6 +35,9 @@ You need to provide a JSON file describing all the servers and databases that ne
 * **`compression_type:`** Specifies the utility used to compress the backups. Valid values are `7z, bz2` and `gz`. I.e to compress with bzip2, put `bz2` in this value.
 * **`bzip2_exe:`** Path to the bzip2 utility. Defaults to `/usr/bin/bzip2`.
 * **`p7zip_exe:`** Path to the 7zip utility. Defaults to `/usr/bin/7z`.
+* **`p7zip_options:`** Options for the 7z compressor. This section is optional, but it's useful for some old versions of 7z that doesn't support the 'sdel' argument.
+  * **`delete_after_compress:`** If true deletes the generated file (a .sql file in most cases) after compressing it. This is the default behavior.
+  * **`supports_sdel:`** If true it will include the '-sdel' argument to 7z in oder to delete the original files, otherwise will delete them using a vanilla os call. True is the default value.
 * **`gzip_exe:`** Path to the gzip utility. Defaults to `/usr/bin/gzip`.
 * **`db_servers:`** This is a map (dictionary) of database server objects. Each item is a "db_server_key: {object}" key value pair. The db_server object contains a list of databases. You can put as many items as you need. It has the following properties:
   * **`db_type:`** Type of database server. Valid values are `mysql` and `postgresql`.
@@ -60,6 +63,10 @@ Sample config file:
   "compression_type": "bz2",
   "bzip2_exe" : "/usr/bin/bzip2",
   "p7zip_exe" : "/opt/local/bin/7za",
+  "p7zip_options": {
+    "delete_after_compress": true,
+    "supports_sdel": false
+  },
   "gzip_exe": "/usr/bin/gzip",
   "db_servers": {
     "server1-postgresql": {
