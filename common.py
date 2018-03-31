@@ -33,6 +33,11 @@ class SQLBackupError(Exception):
     pass
 
 
+class P7ZipOptions(Model):
+    delete_after_compress = BooleanType(default=True)
+    supports_sdel = BooleanType(default=True)
+
+
 class Database(Model):
     db_name = StringType(required=True)
     frequency = StringType(regex='daily|weekly|monthly', default='daily')
@@ -61,4 +66,5 @@ class SQLBackupConfig(Model):
     bzip2_exe = StringType(default='/usr/bin/bzip2')
     gzip_exe = StringType(default='/usr/bin/gzip')
     p7zip_exe = StringType(default='/usr/bin/7z')
+    p7zip_options = ModelType(P7ZipOptions, default=P7ZipOptions({'delete_after_compress': True, 'supports_sdel': True}))
     db_servers = DictType(ModelType(DBServer))

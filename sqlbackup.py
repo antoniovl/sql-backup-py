@@ -104,12 +104,19 @@ class SQLBackup(object):
     def compress_7z(self, file_name):
         cfg = self.config
         p7z_file = '{}.7z'.format(file_name)
-        cmd = [cfg.p7zip_exe, 'a', '-bd', '-t7z', '-m0=lzma', '-mx=9', '-mfb=64', '-md=64m', '-ms=on', '-sdel', p7z_file, file_name]
+        p7z_opts = self.config.p7zip_options
+        cmd = [cfg.p7zip_exe, 'a', '-bd', '-t7z', '-m0=lzma', '-mx=9', '-mfb=64', '-md=64m', '-ms=on']
+        if p7z_opts.delete_after_compress and p7z_opts.supports_sdel:
+            cmd.append('-sdel')
+        cmd.append(p7z_file)
+        cmd.append(file_name)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info('Compressing {}'.format(file_name))
         (stdout, stderr) = p.communicate()
         if stderr and len(stderr) > 0:
             raise SQLBackupError('Error compressing {}: {}'.format(file_name, stderr))
+        if p7z_opts.delete_after_compress and not p7z_opts.supports_sdel:
+            os.remove(file_name)
 
     def verify_7z(self, file_name):
         cfg = self.config
